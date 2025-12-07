@@ -12,6 +12,7 @@ from database import (
     insert_rows,
     fetch_sales,
     get_active_access_code,  # cek kode akses ke DB
+    upsert_access_code,      # <-- TAMBAHAN
 )
 from parser_accurate_html import parse_html_content
 
@@ -854,8 +855,35 @@ def render_dashboard(
 
 @app.on_event("startup")
 def startup_event():
+    """
+    Fungsi ini otomatis dipanggil saat app start
+    (baik di lokal maupun di Railway).
+    Di sini kita:
+    - pastikan tabel sudah ada (init_db)
+    - buat / update kode akses default (DEMO-1234, ABC-2025)
+    """
     conn = get_connection()
     init_db(conn)
+
+    # Kode demo tanpa masa berlaku (bisa kamu ubah nanti)
+    upsert_access_code(
+        conn,
+        code="DEMO-1234",
+        customer_name="Demo Customer",
+        active=1,
+        valid_from=None,
+        valid_to=None,
+    )
+
+    upsert_access_code(
+        conn,
+        code="ABC-2025",
+        customer_name="Customer Contoh",
+        active=1,
+        valid_from=None,
+        valid_to=None,
+    )
+
     conn.close()
 
 
