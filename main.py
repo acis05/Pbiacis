@@ -55,24 +55,88 @@ def render_access_page(message: str = "", is_error: bool = False) -> str:
           href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
           rel="stylesheet"
         >
+        <style>
+            body {{
+                margin: 0;
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: radial-gradient(circle at top, #0f172a 0, #020617 55%);
+                color: #e5e7eb;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            }}
+            .login-card {{
+                max-width: 420px;
+                width: 100%;
+                background: rgba(15,23,42,0.9);
+                border-radius: 18px;
+                padding: 28px 24px 22px;
+                box-shadow: 0 20px 45px rgba(0,0,0,0.7);
+                border: 1px solid rgba(148,163,184,0.4);
+                backdrop-filter: blur(16px);
+            }}
+            .login-title {{
+                font-size: 20px;
+                font-weight: 600;
+                margin-bottom: 4px;
+                text-align: center;
+            }}
+            .login-sub {{
+                font-size: 13px;
+                color: #9ca3af;
+                text-align: center;
+                margin-bottom: 18px;
+            }}
+            label {{
+                font-size: 13px;
+                color: #cbd5f5;
+            }}
+            input.form-control {{
+                background-color: #020617;
+                border-radius: 10px;
+                border: 1px solid #1e293b;
+                color: #e5e7eb;
+                font-size: 14px;
+            }}
+            input.form-control:focus {{
+                border-color: #6366f1;
+                box-shadow: 0 0 0 1px rgba(99,102,241,0.6);
+            }}
+            .btn-primary {{
+                background: linear-gradient(135deg, #6366f1, #22c55e);
+                border: none;
+                border-radius: 999px;
+                font-weight: 600;
+            }}
+            .btn-primary:hover {{
+                opacity: 0.9;
+            }}
+            .footer-note {{
+                margin-top: 16px;
+                font-size: 11px;
+                color: #64748b;
+                text-align: center;
+            }}
+        </style>
     </head>
-    <body class="bg-light">
-        <div class="container d-flex justify-content-center align-items-center" style="min-height:100vh;">
-            <div class="card shadow-sm" style="max-width:420px; width:100%;">
-                <div class="card-body">
-                    <h4 class="card-title mb-3 text-center">Masukkan Kode Akses</h4>
-                    <p class="text-muted small text-center">
-                        Kode akses didapat dari vendor aplikasi dashboard Accurate.
-                    </p>
-                    <form action="/access" method="post">
-                        <div class="mb-3">
-                            <label for="code" class="form-label">Kode Akses</label>
-                            <input type="text" class="form-control" id="code" name="code" placeholder="Contoh: ABC-2025" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Masuk</button>
-                    </form>
-                    {msg_html}
+    <body>
+        <div class="login-card">
+            <div class="login-title">Masukkan Kode Akses</div>
+            <div class="login-sub">
+                Kode akses didapat dari vendor aplikasi dashboard Accurate.
+            </div>
+            <form action="/access" method="post">
+                <div class="mb-3">
+                    <label for="code" class="form-label">Kode Akses</label>
+                    <input type="text" class="form-control" id="code" name="code"
+                           placeholder="Contoh: ABC-2025" required>
                 </div>
+                <button type="submit" class="btn btn-primary w-100">Masuk ke Dashboard</button>
+            </form>
+            {msg_html}
+            <div class="footer-note">
+                ACA Cloud • ACIS Indonesia
             </div>
         </div>
     </body>
@@ -329,86 +393,217 @@ def render_dashboard(
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
         <style>
+            * {{
+                box-sizing: border-box;
+            }}
             body {{
-                background-color: #f5f7fb;
-                font-family: Arial, sans-serif;
+                margin: 0;
+                background: radial-gradient(circle at top, #0f172a 0, #020617 55%);
+                color: #e5e7eb;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             }}
             .navbar-custom {{
-                background-color: #0d6efd;
-                color: white;
-                padding: 12px 24px;
+                position: sticky;
+                top: 0;
+                z-index: 20;
+                backdrop-filter: blur(18px);
+                background: linear-gradient(135deg, rgba(15,23,42,0.96), rgba(15,23,42,0.9));
+                border-bottom: 1px solid rgba(148,163,184,0.25);
+            }}
+            .navbar-inner {{
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 14px 20px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }}
+            .navbar-kicker {{
+                font-size: 11px;
+                color: #38bdf8;
+                text-transform: uppercase;
+                letter-spacing: 0.14em;
+            }}
+            .navbar-title {{
                 font-size: 20px;
                 font-weight: 600;
             }}
-            .card-metric {{
+            .navbar-pill {{
+                padding: 6px 14px;
+                border-radius: 999px;
+                background: linear-gradient(135deg, #22c55e, #16a34a);
+                color: #022c22;
+                font-size: 12px;
+                font-weight: 600;
+            }}
+
+            .content-wrapper {{
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 22px 20px 40px 20px;
+            }}
+
+            .upload-box {{
+                background: rgba(15,23,42,0.9);
+                border-radius: 18px;
+                padding: 16px 18px;
+                box-shadow: 0 16px 40px rgba(0,0,0,0.7);
+                border: 1px solid rgba(148,163,184,0.35);
+                margin-bottom: 24px;
+            }}
+
+            .upload-box .form-label {{
+                font-size: 13px;
+                color: #cbd5f5;
+            }}
+            .upload-box input[type="file"] {{
+                background-color: #020617;
                 border-radius: 10px;
-                color: white;
-                padding: 16px;
+                border: 1px solid #1e293b;
+                color: #e5e7eb;
+                font-size: 13px;
+            }}
+            .upload-box input[type="file"]:focus {{
+                border-color: #6366f1;
+                box-shadow: 0 0 0 1px rgba(99,102,241,0.6);
+            }}
+            .upload-box small {{
+                color: #64748b;
+            }}
+
+            .form-check-label {{
+                color: #cbd5f5;
+                font-size: 13px;
+            }}
+
+            .btn-success {{
+                background: linear-gradient(135deg, #22c55e, #16a34a);
+                border: none;
+                border-radius: 999px;
+                font-weight: 600;
+            }}
+            .btn-success:hover {{
+                opacity: 0.92;
+            }}
+
+            .filters-row label.form-label {{
+                font-size: 13px;
+                color: #cbd5f5;
+            }}
+            .filters-row input[type="date"] {{
+                background-color: #020617;
+                border-radius: 10px;
+                border: 1px solid #1e293b;
+                color: #e5e7eb;
+                font-size: 13px;
+            }}
+            .filters-row input[type="date"]:focus {{
+                border-color: #38bdf8;
+                box-shadow: 0 0 0 1px rgba(56,189,248,0.6);
+            }}
+            #btnFilter {{
+                background: linear-gradient(135deg, #6366f1, #3b82f6);
+                border-radius: 12px;
+                border: none;
+                font-size: 13px;
+                font-weight: 600;
+            }}
+
+            .card-metric {{
+                border-radius: 18px;
+                padding: 18px 18px 14px;
                 height: 100%;
+                color: #e5e7eb;
+                box-shadow: 0 16px 40px rgba(0,0,0,0.7);
+                border: 1px solid rgba(15,23,42,0.8);
+            }}
+            .cm-blue {{
+                background: linear-gradient(135deg, #1d4ed8, #2563eb);
+            }}
+            .cm-green {{
+                background: linear-gradient(135deg, #15803d, #22c55e);
+            }}
+            .cm-yellow {{
+                background: linear-gradient(135deg, #facc15, #f97316);
+                color: #111827;
             }}
             .card-metric-title {{
-                font-size: 14px;
+                font-size: 12px;
                 opacity: 0.9;
             }}
             .card-metric-value {{
-                font-size: 26px;
+                font-size: 24px;
                 font-weight: 700;
-                margin-top: 8px;
+                margin-top: 6px;
             }}
             .card-metric-sub {{
-                font-size: 13px;
-                margin-top: 4px;
+                font-size: 12px;
+                margin-top: 6px;
+                color: #e5e7eb;
             }}
-            .content-wrapper {{
-                padding: 20px 30px 40px 30px;
-            }}
+
             .card-box {{
-                background-color: white;
-                border-radius: 10px;
-                padding: 14px 18px;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+                background: rgba(15,23,42,0.9);
+                border-radius: 18px;
+                padding: 14px 18px 14px;
+                box-shadow: 0 16px 40px rgba(0,0,0,0.7);
+                border: 1px solid rgba(30,64,175,0.6);
                 height: 260px;
             }}
-            .upload-box {{
-                background-color: white;
-                border-radius: 10px;
-                padding: 16px 18px;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            .card-box .fw-semibold {{
+                font-size: 13px;
+                color: #cbd5f5;
             }}
+            .card-box:hover {{
+                border-color: #38bdf8;
+            }}
+
             .chart-container {{
                 position: relative;
                 width: 100%;
                 height: 190px;
+                margin-top: 4px;
             }}
 
-            /* Mobile-friendly tweaks */
+            small.text-muted {{
+                color: #64748b !important;
+            }}
+
             @media (max-width: 768px) {{
-                .navbar-custom {{
+                .navbar-inner {{
+                    padding: 10px 14px;
+                }}
+                .navbar-title {{
                     font-size: 18px;
-                    padding: 10px 16px;
                 }}
                 .content-wrapper {{
-                    padding: 16px 12px 30px 12px;
+                    padding: 16px 12px 26px 12px;
                 }}
                 .card-box {{
                     height: 240px;
                 }}
                 .card-metric-value {{
-                    font-size: 22px;
+                    font-size: 20px;
                 }}
             }}
         </style>
     </head>
     <body>
         <div class="navbar-custom">
-            Power BI Accurate - Monitoring Penjualan
+            <div class="navbar-inner">
+                <div>
+                    <div class="navbar-kicker">Preview Dashboard</div>
+                    <div class="navbar-title">Monitoring Penjualan</div>
+                </div>
+                <div class="navbar-pill">Live &amp; Online</div>
+            </div>
         </div>
 
         <div class="content-wrapper">
 
             <!-- FILTER PERIODE -->
             <div class="mb-3">
-                <div class="row g-3 align-items-end">
+                <div class="row g-3 align-items-end filters-row">
                     <div class="col-auto">
                         <label class="form-label mb-0"><strong>Periode :</strong></label>
                     </div>
@@ -463,7 +658,7 @@ def render_dashboard(
             <!-- METRIC CARDS -->
             <div class="row g-3 mb-3">
                 <div class="col-12 col-md-4">
-                    <div class="card-metric" style="background-color:#0d6efd;">
+                    <div class="card-metric cm-blue">
                         <div class="card-metric-title">Total Penjualan (Semua Data Terfilter)</div>
                         <div class="card-metric-value" id="metricTotal">Rp 0</div>
                         <div class="card-metric-sub" id="metricTotalMoM">
@@ -472,13 +667,13 @@ def render_dashboard(
                     </div>
                 </div>
                 <div class="col-12 col-md-4">
-                    <div class="card-metric" style="background-color:#198754;">
+                    <div class="card-metric cm-green">
                         <div class="card-metric-title">Jumlah Customer</div>
                         <div class="card-metric-value" id="metricCustomer">0</div>
                     </div>
                 </div>
                 <div class="col-12 col-md-4">
-                    <div class="card-metric" style="background-color:#ffc107; color:#333;">
+                    <div class="card-metric cm-yellow">
                         <div class="card-metric-title">Top Customer</div>
                         <div class="card-metric-value" id="metricTopCustomer">-</div>
                     </div>
@@ -603,6 +798,19 @@ def render_dashboard(
             let chartItemMoM = null;
             let chartSalesmanMoM = null;
 
+            const PALETTE = [
+                "rgba(56,189,248,0.85)",
+                "rgba(96,165,250,0.85)",
+                "rgba(52,211,153,0.85)",
+                "rgba(250,204,21,0.85)",
+                "rgba(248,113,113,0.85)",
+                "rgba(167,139,250,0.85)",
+                "rgba(251,146,60,0.85)",
+                "rgba(45,212,191,0.85)",
+                "rgba(244,114,182,0.85)",
+                "rgba(129,140,248,0.85)"
+            ];
+
             function formatRupiah(value) {{
                 if (!value) return "0";
                 return Number(value).toLocaleString('id-ID');
@@ -644,6 +852,32 @@ def render_dashboard(
                 return {{ labels, values }};
             }}
 
+            function baseChartOptions() {{
+                return {{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {{
+                        legend: {{
+                            labels: {{
+                                color: "#e5e7eb",
+                                font: {{ size: 11 }}
+                            }}
+                        }}
+                    }},
+                    scales: {{
+                        x: {{
+                            ticks: {{ color: "#e5e7eb", maxRotation: 45, minRotation: 0 }},
+                            grid: {{ color: "rgba(148,163,184,0.25)" }}
+                        }},
+                        y: {{
+                            beginAtZero: true,
+                            ticks: {{ color: "#e5e7eb" }},
+                            grid: {{ color: "rgba(148,163,184,0.18)" }}
+                        }}
+                    }}
+                }};
+            }}
+
             function createOrUpdateBarChart(oldChart, canvasId, labels, values, title) {{
                 const ctx = document.getElementById(canvasId).getContext("2d");
                 if (oldChart) {{
@@ -656,17 +890,11 @@ def render_dashboard(
                         datasets: [{{
                             label: title,
                             data: values,
+                            backgroundColor: "rgba(56,189,248,0.9)",
+                            borderRadius: 6,
                         }}]
                     }},
-                    options: {{
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {{
-                            y: {{
-                                beginAtZero: true
-                            }}
-                        }}
-                    }}
+                    options: baseChartOptions()
                 }});
             }}
 
@@ -675,21 +903,20 @@ def render_dashboard(
                 if (oldChart) {{
                     oldChart.destroy();
                 }}
+                const ds = datasets.map((d, idx) => ({{
+                    ...d,
+                    backgroundColor: idx === 0
+                        ? "rgba(56,189,248,0.9)"
+                        : "rgba(96,165,250,0.9)",
+                    borderRadius: 5,
+                }}));
                 return new Chart(ctx, {{
                     type: "bar",
                     data: {{
                         labels: labels,
-                        datasets: datasets
+                        datasets: ds
                     }},
-                    options: {{
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {{
-                            y: {{
-                                beginAtZero: true
-                            }}
-                        }}
-                    }}
+                    options: baseChartOptions()
                 }});
             }}
 
@@ -698,6 +925,7 @@ def render_dashboard(
                 if (oldChart) {{
                     oldChart.destroy();
                 }}
+                const colors = labels.map((_, i) => PALETTE[i % PALETTE.length]);
                 return new Chart(ctx, {{
                     type: "pie",
                     data: {{
@@ -705,11 +933,20 @@ def render_dashboard(
                         datasets: [{{
                             label: title,
                             data: values,
+                            backgroundColor: colors,
                         }}]
                     }},
                     options: {{
                         responsive: true,
                         maintainAspectRatio: false,
+                        plugins: {{
+                            legend: {{
+                                labels: {{
+                                    color: "#e5e7eb",
+                                    font: {{ size: 11 }}
+                                }}
+                            }}
+                        }}
                     }}
                 }});
             }}
