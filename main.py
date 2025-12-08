@@ -12,7 +12,7 @@ from database import (
     insert_rows,
     fetch_sales,
     get_active_access_code,  # cek kode akses ke DB
-    upsert_access_code,      # <-- TAMBAHAN
+    upsert_access_code,      # untuk auto-bikin kode akses
 )
 from parser_accurate_html import parse_html_content
 
@@ -49,6 +49,7 @@ def render_access_page(message: str = "", is_error: bool = False) -> str:
     <html>
     <head>
         <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>Masukkan Kode Akses</title>
         <link
           href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
@@ -204,13 +205,7 @@ def build_dashboard_data(
     rows: List[Dict],
 ) -> Dict:
     """
-    Ambil list transaksi → kembalikan data ringkasan untuk dashboard:
-    - total penjualan
-    - jumlah customer
-    - top customer
-    - berbagai Top 10
-    - total bulan ini vs bulan lalu
-    - Top 10 item & salesman bulan ini vs bulan lalu
+    Ambil list transaksi → kembalikan data ringkasan untuk dashboard.
     """
     total_sales = 0.0
     customers_set = set()
@@ -323,6 +318,7 @@ def render_dashboard(
     <html>
     <head>
         <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>Power BI Accurate - Monitoring Penjualan</title>
         <!-- Bootstrap 5 CDN -->
         <link
@@ -383,6 +379,23 @@ def render_dashboard(
                 position: relative;
                 width: 100%;
                 height: 190px;
+            }}
+
+            /* Mobile-friendly tweaks */
+            @media (max-width: 768px) {{
+                .navbar-custom {{
+                    font-size: 18px;
+                    padding: 10px 16px;
+                }}
+                .content-wrapper {{
+                    padding: 16px 12px 30px 12px;
+                }}
+                .card-box {{
+                    height: 240px;
+                }}
+                .card-metric-value {{
+                    font-size: 22px;
+                }}
             }}
         </style>
     </head>
@@ -512,7 +525,7 @@ def render_dashboard(
                 </div>
             </div>
 
-            <!-- ROW 3 CHARTS -->
+            <!-- ROW 3 CHARTS: SALESMAN + BARANG -->
             <div class="row g-3 mb-3">
                 <div class="col-12 col-md-6">
                     <div class="card-box">
@@ -524,9 +537,21 @@ def render_dashboard(
                 </div>
                 <div class="col-12 col-md-6">
                     <div class="card-box">
-                        <div class="fw-semibold mb-1">Top 10 Penjualan per Barang / Kategori</div>
+                        <div class="fw-semibold mb-1">Top 10 Penjualan per Barang</div>
                         <div class="chart-container">
-                            <canvas id="chartItemCategory"></canvas>
+                            <canvas id="chartItem"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROW 3B: KATEGORI BARANG -->
+            <div class="row g-3 mb-3">
+                <div class="col-12 col-md-6">
+                    <div class="card-box">
+                        <div class="fw-semibold mb-1">Top 10 Penjualan per Kategori Barang</div>
+                        <div class="chart-container">
+                            <canvas id="chartCategory"></canvas>
                         </div>
                     </div>
                 </div>
@@ -572,7 +597,8 @@ def render_dashboard(
             let chartCustomerType = null;
             let chartCity = null;
             let chartSalesman = null;
-            let chartItemCategory = null;
+            let chartItem = null;
+            let chartCategory = null;
             let chartTotalMoM = null;
             let chartItemMoM = null;
             let chartSalesmanMoM = null;
@@ -759,25 +785,23 @@ def render_dashboard(
                     "Total Penjualan"
                 );
 
-                // Barang/Kategori (gabung)
-                const topItem = data.top10_item || [];
-                const topCat = data.top10_category || [];
-                const combinedLabels = [];
-                const combinedValues = [];
-                for (const it of topItem) {{
-                    combinedLabels.push(it.label);
-                    combinedValues.push(it.amount);
-                }}
-                for (const ct of topCat) {{
-                    combinedLabels.push(ct.label + " (Kategori)");
-                    combinedValues.push(ct.amount);
-                }}
+                // Barang (Top 10)
+                lv = buildLabelsAndValues(data.top10_item);
+                chartItem = createOrUpdateBarChart(
+                    chartItem,
+                    "chartItem",
+                    lv.labels,
+                    lv.values,
+                    "Total Penjualan"
+                );
 
-                chartItemCategory = createOrUpdateBarChart(
-                    chartItemCategory,
-                    "chartItemCategory",
-                    combinedLabels,
-                    combinedValues,
+                // Kategori Barang (Top 10)
+                lv = buildLabelsAndValues(data.top10_category);
+                chartCategory = createOrUpdateBarChart(
+                    chartCategory,
+                    "chartCategory",
+                    lv.labels,
+                    lv.values,
                     "Total Penjualan"
                 );
 
@@ -856,16 +880,14 @@ def render_dashboard(
 @app.on_event("startup")
 def startup_event():
     """
-    Fungsi ini otomatis dipanggil saat app start
-    (baik di lokal maupun di Railway).
-    Di sini kita:
-    - pastikan tabel sudah ada (init_db)
-    - buat / update kode akses default (DEMO-1234, ABC-2025)
+    Otomatis jalan saat app start (lokal maupun Railway).
+    - pastikan tabel ada
+    - buat / update kode akses default
     """
     conn = get_connection()
     init_db(conn)
 
-    # Kode demo tanpa masa berlaku (bisa kamu ubah nanti)
+    # Kode demo – nanti bisa kamu ganti pola & masa berlakunya
     upsert_access_code(
         conn,
         code="DEMO-1234",

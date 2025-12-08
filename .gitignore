@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+accurate_sales.db
+.env
