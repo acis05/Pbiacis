@@ -1165,6 +1165,11 @@ async def upload(
     if not is_authorized(request):
         return render_access_page("Silakan masukkan kode akses terlebih dahulu.", is_error=True)
 
+    # Ambil kode akses dari cookie (pasti ada kalau sudah authorized)
+    access_code = request.cookies.get(ACCESS_COOKIE_NAME)
+    if not access_code:
+        return render_access_page("Sesi akses tidak valid. Silakan login ulang.", is_error=True)
+
     try:
         contents = await file.read()
         html = contents.decode("utf-8", errors="ignore")
@@ -1174,10 +1179,12 @@ async def upload(
         conn = get_connection()
         init_db(conn)
 
+        # Hapus data lama hanya untuk access_code ini
         if clear_before == "1":
-            clear_sales(conn)
+            clear_sales(conn, access_code)
 
-        insert_rows(conn, [r.to_tuple() for r in records])
+        # Insert data baru untuk access_code ini
+        insert_rows(conn, [r.to_tuple() for r in records], access_code)
         conn.close()
 
         msg = f"Berhasil import {len(records)} baris transaksi dari file: {file.filename}"
@@ -1201,8 +1208,12 @@ def get_sales(
     if not is_authorized(request):
         return JSONResponse({"detail": "Unauthorized"}, status_code=401)
 
+    access_code = request.cookies.get(ACCESS_COOKIE_NAME)
+    if not access_code:
+        return JSONResponse({"detail": "Unauthorized"}, status_code=401)
+
     conn = get_connection()
-    data = fetch_sales(conn, start_date=start_date, end_date=end_date)
+    data = fetch_sales(conn, access_code=access_code, start_date=start_date, end_date=end_date)
     conn.close()
     return JSONResponse(content=data)
 
@@ -1216,8 +1227,12 @@ def get_dashboard_data(
     if not is_authorized(request):
         return JSONResponse({"detail": "Unauthorized"}, status_code=401)
 
+    access_code = request.cookies.get(ACCESS_COOKIE_NAME)
+    if not access_code:
+        return JSONResponse({"detail": "Unauthorized"}, status_code=401)
+
     conn = get_connection()
-    rows = fetch_sales(conn, start_date=start_date, end_date=end_date)
+    rows = fetch_sales(conn, access_code=access_code, start_date=start_date, end_date=end_date)
     conn.close()
 
     data = build_dashboard_data(rows)

@@ -17,7 +17,7 @@ def get_connection(db_path: Optional[Path] = None) -> sqlite3.Connection:
 
 
 def init_db(conn: sqlite3.Connection) -> None:
-    """Buat tabel-tabel kalau belum ada."""
+    """Buat tabel-tabel kalau belum ada + migrate kolom access_code untuk multi-tenant."""
     cur = conn.cursor()
 
     # Tabel utama data penjualan
@@ -35,9 +35,18 @@ def init_db(conn: sqlite3.Connection) -> None:
             item_category     TEXT,
             city              TEXT,
             customer_type     TEXT
+            -- kolom access_code akan ditambahkan via ALTER TABLE di bawah
         );
         """
     )
+
+    # Cek apakah kolom access_code sudah ada, kalau belum tambahkan
+    cur.execute("PRAGMA table_info(sales_detail);")
+    cols = [row[1] for row in cur.fetchall()]
+    if "access_code" not in cols:
+        cur.execute("ALTER TABLE sales_detail ADD COLUMN access_code TEXT;")
+
+    # Index-index
     cur.execute(
         "CREATE INDEX IF NOT EXISTS idx_sales_date ON sales_detail(invoice_date);"
     )
@@ -49,6 +58,9 @@ def init_db(conn: sqlite3.Connection) -> None:
     )
     cur.execute(
         "CREATE INDEX IF NOT EXISTS idx_sales_item ON sales_detail(item);"
+    )
+    cur.execute(
+        "CREATE INDEX IF NOT EXISTS idx_sales_access_code ON sales_detail(access_code);"
     )
 
     # Tabel kode akses (lisensi)
@@ -71,18 +83,27 @@ def init_db(conn: sqlite3.Connection) -> None:
     conn.commit()
 
 
-def clear_sales(conn: sqlite3.Connection) -> None:
-    """Kosongkan data (full reload)."""
+def clear_sales(conn: sqlite3.Connection, access_code: str) -> None:
+    """
+    Hapus data hanya untuk 1 customer (berdasarkan access_code).
+    Dipakai saat user centang "Hapus data lama sebelum import".
+    """
     cur = conn.cursor()
-    cur.execute("DELETE FROM sales_detail;")
+    cur.execute("DELETE FROM sales_detail WHERE access_code = ?;", (access_code,))
     conn.commit()
 
 
-def insert_rows(conn: sqlite3.Connection, rows: Iterable[tuple]) -> None:
-    """Insert banyak baris ke tabel sales_detail."""
+def insert_rows(conn: sqlite3.Connection, rows: Iterable[tuple], access_code: str) -> None:
+    """
+    Insert banyak baris ke tabel sales_detail untuk 1 customer (access_code tertentu).
+    Parameter rows diasumsikan 10 kolom pertama (tanpa access_code),
+    nanti di-append access_code di sini.
+    """
     rows = list(rows)
     if not rows:
         return
+
+    rows_with_code = [r + (access_code,) for r in rows]
 
     cur = conn.cursor()
     cur.executemany(
@@ -97,11 +118,12 @@ def insert_rows(conn: sqlite3.Connection, rows: Iterable[tuple]) -> None:
             amount,
             item_category,
             city,
-            customer_type
+            customer_type,
+            access_code
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         """,
-        rows,
+        rows_with_code,
     )
     conn.commit()
 
@@ -129,18 +151,22 @@ def _parse_any_date(date_str: str):
 
 def fetch_sales(
     conn: sqlite3.Connection,
+    access_code: Optional[str],
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     """
-    Ambil data untuk dikirim ke dashboard.
+    Ambil data untuk dikirim ke dashboard, khusus untuk 1 access_code.
     start_date & end_date format 'YYYY-MM-DD' (dari input <input type="date">).
     Tanggal di DB boleh format:
     - YYYY-MM-DD
     - DD/MM/YYYY
     - DD/MM/YY
-    Filter dilakukan di Python.
+    Filter tanggal dilakukan di Python.
     """
+    if not access_code:
+        return []
+
     cur = conn.cursor()
     cur.execute(
         """
@@ -156,7 +182,9 @@ def fetch_sales(
             city,
             customer_type
         FROM sales_detail
-        """
+        WHERE access_code = ?
+        """,
+        (access_code,),
     )
     rows = [dict(row) for row in cur.fetchall()]
 
