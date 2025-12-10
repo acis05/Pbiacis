@@ -129,8 +129,13 @@ def render_access_page(message: str = "", is_error: bool = False) -> str:
             <form action="/access" method="post">
                 <div class="mb-3">
                     <label for="code" class="form-label">Kode Akses</label>
-                    <input type="text" class="form-control" id="code" name="code"
-                           placeholder="Contoh: ABC-2025" required>
+                    <input type="password"
+                           class="form-control"
+                           id="code"
+                           name="code"
+                           placeholder="Contoh: ABC-2025"
+                           autocomplete="off"
+                           required>
                 </div>
                 <button type="submit" class="btn btn-primary w-100">Masuk ke Dashboard</button>
             </form>
